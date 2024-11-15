@@ -24,3 +24,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             password=validated_data.get('password')
         )
         return user
+
+class LoginSerializer(serializers.ModelSerializer):
+    pass
