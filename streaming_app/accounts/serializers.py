@@ -44,22 +44,22 @@ class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['email', 'password', 'full_name', 'access_token', 'refresh_token']
-        def validate(self, attrs):
-            email = attrs.get('email')
-            password = attrs.get('password')
-            request = self.context.get('request')
-            user = authenticate(request, email=email, password=password)
-            if not user:
-                raise AuthenticationFailed('Invalid credentials try again')
-            if not user.is_verified:
-                raise AuthenticationFailed('Email is not verified')
-            user_tokens = user.tokens()
-            return {
-                'email': user.email,
-                'full_name': user.get_full_name,
-                'access_token': str(user_tokens.get('access')),
-                'refresh_token': str(user_tokens.get('refresh')),
-            }
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        request = self.context.get('request')
+        user = authenticate(request, email=email, password=password)
+        if not user:
+            raise AuthenticationFailed('Invalid credentials try again')
+        if not user.is_verified:
+            raise AuthenticationFailed('Email is not verified')
+        user_tokens = user.tokens()
+        return {
+            'email': user.email,
+            'full_name': user.get_full_name,
+            'access_token': str(user_tokens.get('access')),
+            'refresh_token': str(user_tokens.get('refresh')),
+        }
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
