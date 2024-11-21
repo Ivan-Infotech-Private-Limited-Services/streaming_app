@@ -28,14 +28,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create_user(
             email=validated_data['email'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-            password=validated_data['password']
+            first_name=validated_data.get('first_name'),
+            last_name=validated_data.get('last_name'),
+            password=validated_data.get('password')
         )
         return user
 
 class LoginSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(max_length=255, min_length=6)
+    email = serializers.EmailField(max_length=155, min_length=6)
     password = serializers.CharField(max_length=68, write_only=True)
     full_name = serializers.CharField(max_length=255, read_only=True)
     access_token = serializers.CharField(max_length=255, read_only=True)
@@ -50,15 +50,15 @@ class LoginSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = authenticate(request, email=email, password=password)
         if not user:
-            raise AuthenticationFailed('Invalid credentials try again')
+            raise AuthenticationFailed("invalid credential try again")
         if not user.is_verified:
-            raise AuthenticationFailed('Email is not verified')
-        user_tokens = user.tokens()
+            raise AuthenticationFailed("Email is not verified")
+        tokens=user.tokens()
         return {
             'email': user.email,
             'full_name': user.get_full_name,
-            'access_token': str(user_tokens.get('access')),
-            'refresh_token': str(user_tokens.get('refresh')),
+            'access_token': str(tokens.get('access')),
+            'refresh_token': str(tokens.get('refresh')),
         }
 
 class PasswordResetRequestSerializer(serializers.Serializer):

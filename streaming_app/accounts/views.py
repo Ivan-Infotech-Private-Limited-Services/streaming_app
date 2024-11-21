@@ -42,7 +42,7 @@ class VerifyEmailView(GenericAPIView):
             return Response({
                 'message': 'code is invalid user already verified'
             }, status=status.HTTP_204_NO_CONTENT)
-        except OneTimePassword.DoesNotExist:
+        except OneTimePassword.DoesNotExist as identifier:
             return Response({
                 'message': 'passcode not provided'
             }, status=status.HTTP_404_NOT_FOUND)

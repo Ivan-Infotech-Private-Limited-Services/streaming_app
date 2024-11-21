@@ -34,7 +34,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*', 'http://localhost:3000']
 
 
 # Application definition
@@ -63,6 +63,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CORS_ALLOW_ALL_ORIGINS=True
+CORS_ALLOW_CREDENTIALS=True
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+]
 ROOT_URLCONF = 'streaming_app.urls'
 
 TEMPLATES = [
@@ -83,6 +88,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'streaming_app.wsgi.application'
 
+AUTH_USER_MODEL = "accounts.USER"
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -94,10 +101,13 @@ DATABASES = {
     }
 }
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES':(
+REST_FRAMEWORK={
+    'NON_FIELD_ERRORS_KEY':'error',
+        'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
+
 }
 
 SIMPLE_JWT = {
@@ -106,7 +116,7 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-AUTH_USER_MODEL = "accounts.USER"
+DOMAIN='localhost:3000'
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
