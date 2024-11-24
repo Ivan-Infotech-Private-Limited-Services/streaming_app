@@ -88,7 +88,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'streaming_app.wsgi.application'
 
-AUTH_USER_MODEL = "accounts.USER"
+AUTH_USER_MODEL = "accounts.User"
 
 
 # Database
@@ -117,6 +117,11 @@ SIMPLE_JWT = {
 }
 
 DOMAIN='localhost:3000'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'accounts.backends.EmailBackend',
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
