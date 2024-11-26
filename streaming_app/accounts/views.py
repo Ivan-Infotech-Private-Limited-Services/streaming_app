@@ -106,3 +106,13 @@ class LogoutUserView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class LogoutAdminView(GenericAPIView):
+    serializer_class=LogoutUserSerializer
+    permission_classes=[IsAuthenticated]
+    def post(self, request):
+        if request.user.is_superuser:
+            serializer=self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
