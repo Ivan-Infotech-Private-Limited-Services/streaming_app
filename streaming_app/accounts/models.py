@@ -1,5 +1,7 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.forms import ValidationError
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import RefreshToken
 # Create your models here.
@@ -68,6 +70,8 @@ class OneTimePassword(models.Model):
 class Genre(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -75,8 +79,159 @@ class Genre(models.Model):
 class Movie(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    genre = models.ForeignKey(Genre, related_name="movies", on_delete=models.CASCADE)
+    genres = models.ManyToManyField(Genre, related_name="movies")
     release_date = models.DateField()
+    director = models.CharField(max_length=255, null=True)
+    cast = models.TextField(blank=True, null=True)
+    rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
+    def clean(self):
+        if self.rating and (self.rating < 0 or self.rating > 10):
+            raise ValidationError(_("Rating must be between 0 and 10"))
+        if self.release_date and self.release_date > datetime.date.today():
+            raise ValidationError(_("Release date cannot be in the future"))
+        return super().clean()
+    @property
+    def average_rating(self):
+        if self.rating:
+            return sum([float(r) for r in self.rating.split(',')]) / len(self.rating.split(','))
+        return 0.0
+    @property
+    def is_released(self):
+        return self.release_date <= datetime.date.today()
+    @property
+    def duration(self):
+        if self.release_date:
+            return (datetime.date.today() - self.release_date).days
+        return 0
+    @property
+    def actors(self):
+        return [cast.strip() for cast in self.cast.split(',') if cast.strip()]
+    @property
+    def genres_list(self):
+        return [genre.name for genre in self.genres.all()]
+    @property
+    def director_and_cast(self):
+        return f"{self.director} ({', '.join(self.actors)})"
+    @property
+    def formatted_release_date(self):
+        return self.release_date.strftime("%B %d, %Y")
+    @property
+    def formatted_rating(self):
+        if self.rating:
+            return f"{self.rating:.1f}/10"
+        return "N/A"
+    @property
+    def formatted_duration(self):
+        if self.release_date:
+            return f"{self.duration} days"
+        return "N/A"
+    @property
+    def formatted_cast(self):
+        if self.cast:
+            return ", ".join(self.actors)
+        return "N/A"
+    @property
+    def formatted_genres(self):
+        if self.genres.all():
+            return ", ".join(self.genres_list)
+        return "N/A"
+    @property
+    def formatted_director_and_cast(self):
+        if self.director and self.cast:
+            return f"{self.director} ({self.formatted_cast})"
+        return "N/A"
+    @property
+    def formatted_average_rating(self):
+        if self.rating:
+            return f"{self.average_rating:.1f}/10"
+        return "N/A"
+    @property
+    def formatted_is_released(self):
+        if self.is_released:
+            return "Yes"
+        return "No"
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime("%B %d, %Y %I:%M:%S %p")
+    @property
+    def formatted_updated_at(self):
+        return self.updated_at.strftime("%B %d, %Y %I:%M:%S %p")
+
+class StreamingLink(models.Model):
+    movie = models.ForeignKey(Movie, related_name='streaming_links', on_delete=models.CASCADE)
+    url = models.URLField()
+    quality = models.CharField(max_length=50, choices=[('HD', 'HD'), ('SD', 'SD')])
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together = ('movie', 'quality')
+    def __str__(self):
+        return f"{self.movie.title} - {self.quality} - {self.url}"
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime("%B %d, %Y %I:%M:%S %p")
+    @property
+    def formatted_updated_at(self):
+        return self.updated_at.strftime("%B %d, %Y %I:%M:%S %p")
+    @property
+    def formatted_url(self):
+        return self.url.replace("https://", "").replace("http://", "")
+    @property
+    def formatted_quality(self):
+        return self.quality
+    @property
+    def formatted_movie_title(self):
+        return self.movie.title
+    @property
+    def formatted_movie_director_and_cast(self):
+        return self.movie.director_and_cast
+    @property
+    def formatted_movie_release_date(self):
+        return self.movie.formatted_release_date
+    @property
+    def formatted_movie_duration(self):
+        return self.movie.formatted_duration
+    @property
+    def formatted_movie_cast(self):
+        return self.movie.formatted_cast
+    @property
+    def formatted_movie_genres(self):
+        return self.movie.formatted_genres
+    @property
+    def formatted_movie_director_and_cast(self):
+        return self.movie.formatted_director_and_cast
+    @property
+    def formatted_movie_average_rating(self):
+        return self.movie.formatted_average_rating
+    @property
+    def formatted_movie_is_released(self):
+        return self.movie.formatted_is_released
+    @property
+    def formatted_movie_created_at(self):
+        return self.movie.formatted_created_at
+    @property
+    def formatted_movie_updated_at(self):
+        return self.movie.formatted_updated_at
+    @property
+    def formatted_streaming_link_url(self):
+        return self.url.replace("https://", "").replace("http://", "")
+    @property
+    def formatted_streaming_link_quality(self):
+        return self.quality
+    @property
+    def formatted_streaming_link_movie_title(self):
+        return self.movie.title
+    @property
+    def formatted_streaming_link_movie_director_and_cast(self):
+        return self.movie.director_and_cast
+    @property
+    def formatted_streaming_link_movie_release_date(self):
+        return self.movie.formatted_release_date
+    @property
+    def formatted_streaming_link_movie_duration(self):
+        return self.movie.formatted_duration
