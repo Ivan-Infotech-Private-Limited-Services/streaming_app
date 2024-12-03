@@ -1,5 +1,20 @@
 from django.urls import path
-from .views import RegisterUserView, VerifyEmailView, LoginUserView, TestAuthenticationView, PasswordResetConfirm, PasswordResetRequestView, SetNewPassword, LogoutUserView, LoginAdminView, LogoutAdminView
+from .views import (
+    GenreDetailView,
+    GenreView,
+    MovieDetailView,
+    MovieListCreateView, 
+    RegisterUserView, 
+    VerifyEmailView, 
+    LoginUserView, 
+    TestAuthenticationView, 
+    PasswordResetConfirm, 
+    PasswordResetRequestView, 
+    SetNewPassword, 
+    LogoutUserView, 
+    LoginAdminView, 
+    LogoutAdminView
+)
 
 urlpatterns=[
     path('register/', RegisterUserView.as_view(), name='register'),
@@ -11,5 +26,9 @@ urlpatterns=[
     path('set-new-password/', SetNewPassword.as_view(), name='set-new-password'),
     path('logout/', LogoutUserView.as_view(), name='logout'),
     path('login-admin/', LoginAdminView.as_view(), name='login-admin'),
-    path('logout-admin/', LogoutAdminView.as_view(), name='logout-admin')
+    path('logout-admin/', LogoutAdminView.as_view(), name='logout-admin'),
+    path('genre/', GenreView.as_view(), name='genre-list-create'),
+    path('genre/<int:id>/', GenreDetailView.as_view(), name='genre-detail'),
+    path('movies/', MovieListCreateView.as_view(), name='movie-list-create'),
+    path('movies/<int:pk>/', MovieDetailView.as_view(), name='movie-detail'),
 ]

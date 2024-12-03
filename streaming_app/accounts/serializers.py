@@ -184,11 +184,77 @@ class LogoutUserSerializer(serializers.Serializer):
             return self.fail('bad_token')
 
 class GenreSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=255)
+    description = serializers.CharField(max_length=1000, allow_blank=True)
+
     class Meta:
         model = Genre
-        fields = '__all__'
+        fields = ['id', 'name', 'description']
+
+    def validate_name(self, value):
+        if self.instance and self.instance.name == value:
+            return value
+        if Genre.objects.filter(name=value).exists():
+            raise serializers.ValidationError("A genre with this name already exists.")
+        return value
+
+    def create(self, validated_data):
+        genre = Genre.objects.create(
+            name=validated_data['name'],
+            description=validated_data.get('description', '')
+        )
+        return genre
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+        return instance
+
+    def delete(self, instance):
+        instance.delete()
 
 class MovieSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length=255)
+    description = serializers.CharField(max_length=1000, allow_blank=True)
+    genre = serializers.PrimaryKeyRelatedField(queryset=Genre.objects.all())
+    release_date = serializers.DateField()
+    rating = serializers.FloatField(min_value=0.0, max_value=10.0)
+
     class Meta:
         model = Movie
-        fields = '__all__'
+        fields = ['id', 'title', 'description', 'genre', 'release_date', 'rating']
+
+    def validate(self, attrs):
+        title = attrs.get('title', '').strip()
+        release_date = attrs.get('release_date', None)
+
+        if Movie.objects.filter(title=title, release_date=release_date).exists():
+            raise serializers.ValidationError("A movie with this title and release date already exists.")
+        
+        return attrs
+
+    def create(self, validated_data):
+        """ Handle creation of a new movie """
+        movie = Movie.objects.create(
+            title=validated_data['title'],
+            description=validated_data.get('description', ''),
+            genre=validated_data['genre'],
+            release_date=validated_data['release_date'],
+            rating=validated_data['rating']
+        )
+        return movie
+
+    def update(self, instance, validated_data):
+        """ Handle updates to an existing movie instance """
+        instance.title = validated_data.get('title', instance.title)
+        instance.description = validated_data.get('description', instance.description)
+        instance.genre = validated_data.get('genre', instance.genre)
+        instance.release_date = validated_data.get('release_date', instance.release_date)
+        instance.rating = validated_data.get('rating', instance.rating)
+        instance.save()
+        return instance
+
+    def delete(self, instance):
+        """ Handle deletion of a movie instance """
+        instance.delete()

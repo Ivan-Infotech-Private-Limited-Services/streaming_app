@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
-from .serializers import PasswordResetRequestSerializer, UserRegisterSerializer, LoginSerializer, SetNewPasswordSerializer, LogoutUserSerializer, LoginAdminSerializer
+from .serializers import GenreSerializer, MovieSerializer, PasswordResetRequestSerializer, UserRegisterSerializer, LoginSerializer, SetNewPasswordSerializer, LogoutUserSerializer, LoginAdminSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .utils import send_code_to_user
-from .models import OneTimePassword, User
+from .models import Genre, Movie, OneTimePassword, User
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -116,3 +116,124 @@ class LogoutAdminView(GenericAPIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+class GenreView(GenericAPIView):
+    serializer_class = GenreSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        """ Retrieve all genres """
+        genres = Genre.objects.all()
+        serializer = GenreSerializer(genres, many=True)
+        return Response({
+            'data': serializer.data,
+            'message': 'Genres retrieved successfully'
+        }, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """ Create a new genre """
+        genre_data = request.data
+        serializer = GenreSerializer(data=genre_data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response({
+                'data': serializer.data,
+                'message': 'Genre created successfully'
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GenreDetailView(GenericAPIView):
+    serializer_class = GenreSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, id):
+        """Retrieve a genre by ID"""
+        try:
+            genre = Genre.objects.get(id=id)
+            serializer = self.serializer_class(genre)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Genre.DoesNotExist:
+            return Response({'message': 'Genre not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, id):
+        """Update a genre by ID"""
+        try:
+            genre = Genre.objects.get(id=id)
+            serializer = self.serializer_class(genre, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({
+                    'data': serializer.data,
+                    'message': 'Genre updated successfully'
+                }, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Genre.DoesNotExist:
+            return Response({'message': 'Genre not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, id):
+        """Delete a genre by ID"""
+        try:
+            genre = Genre.objects.get(id=id)
+            genre.delete()
+            return Response({'message': 'Genre deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Genre.DoesNotExist:
+            return Response({'message': 'Genre not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class MovieListCreateView(GenericAPIView):
+    serializer_class = MovieSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        """Create a new movie"""
+        movie_data = request.data
+        serializer = self.serializer_class(data=movie_data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response({
+                'data': serializer.data,
+                'message': 'Movie created successfully'
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        """Retrieve all movies"""
+        movies = Movie.objects.all()
+        serializer = self.serializer_class(movies, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class MovieDetailView(GenericAPIView):
+    serializer_class = MovieSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, pk):
+        """Retrieve a single movie by ID"""
+        try:
+            movie = Movie.objects.get(pk=pk)
+            serializer = self.serializer_class(movie)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Movie.DoesNotExist:
+            return Response({'message': 'Movie not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, pk):
+        """Update a movie by ID"""
+        try:
+            movie = Movie.objects.get(pk=pk)
+            serializer = self.serializer_class(movie, data=request.data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({
+                    'data': serializer.data,
+                    'message': 'Movie updated successfully'
+                }, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Movie.DoesNotExist:
+            return Response({'message': 'Movie not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request, pk):
+        """Delete a movie by ID"""
+        try:
+            movie = Movie.objects.get(pk=pk)
+            movie.delete()
+            return Response({'message': 'Movie deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+        except Movie.DoesNotExist:
+            return Response({'message': 'Movie not found'}, status=status.HTTP_404_NOT_FOUND)
