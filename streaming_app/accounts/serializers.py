@@ -263,6 +263,11 @@ class WatchlistSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     movie = serializers.PrimaryKeyRelatedField(queryset=Movie.objects.all())
 
+    def validate(self, attrs):
+        if watchlist.objects.filter(user=attrs['user'], movie=attrs['movie']).exists():
+            raise serializers.ValidationError("This movie is already in the watchlist.")
+        return attrs
+
     class Meta:
         model = watchlist
         fields = ['id', 'user', 'movie']
@@ -297,6 +302,11 @@ class WatchedlistSerializer(serializers.ModelSerializer):
             'movie': {'required': True}
         }
     
+    def validate(self, attrs):
+        if watchedlist.objects.filter(user=attrs['user'], movie=attrs['movie']).exists():
+            raise serializers.ValidationError("This movie is already in the watchedlist.")
+        return attrs
+
     def create(self, validated_data):
         watchedlist = watchedlist.objects.create(**validated_data)
         return watchedlist
