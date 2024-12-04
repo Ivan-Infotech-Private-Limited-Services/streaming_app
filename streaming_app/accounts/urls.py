@@ -13,7 +13,11 @@ from .views import (
     SetNewPassword, 
     LogoutUserView, 
     LoginAdminView, 
-    LogoutAdminView
+    LogoutAdminView,
+    WatchedlistDetailView,
+    WatchedlistView,
+    WatchlistDetailView,
+    WatchlistView
 )
 
 urlpatterns=[
@@ -31,4 +35,8 @@ urlpatterns=[
     path('genre/<int:id>/', GenreDetailView.as_view(), name='genre-detail'),
     path('movies/', MovieListCreateView.as_view(), name='movie-list-create'),
     path('movies/<int:pk>/', MovieDetailView.as_view(), name='movie-detail'),
+    path('watchlist/', WatchlistView.as_view(), name='watchlist'),
+    path('watchlist/<int:pk>/', WatchlistDetailView.as_view(), name='watchlist-detail'),
+    path('watchedlist/', WatchedlistView.as_view(), name='watchedlist'),
+    path('watchedlist/<int:pk>/', WatchedlistDetailView.as_view(), name='watchedlist-detail'),
 ]

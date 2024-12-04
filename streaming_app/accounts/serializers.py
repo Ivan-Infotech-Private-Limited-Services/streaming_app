@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Genre, Movie, User
+from .models import Genre, Movie, User, watchedlist, watchlist
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -257,4 +257,55 @@ class MovieSerializer(serializers.ModelSerializer):
 
     def delete(self, instance):
         """ Handle deletion of a movie instance """
+        instance.delete()
+
+class WatchlistSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    movie = serializers.PrimaryKeyRelatedField(queryset=Movie.objects.all())
+
+    class Meta:
+        model = watchlist
+        fields = ['id', 'user', 'movie']
+        read_only_fields = ['id']
+        extra_kwargs = {
+            'user': {'required': True},
+            'movie': {'required': True}
+        }
+    
+    def create(self, validated_data):
+        watchlist = watchlist.objects.create(**validated_data)
+        return watchlist
+    
+    def update(self, instance, validated_data):
+        instance.user = validated_data.get('user', instance.user)
+        instance.movie = validated_data.get('movie', instance.movie)
+        instance.save()
+        return instance
+    
+    def delete(self, instance):
+        instance.delete()
+
+class WatchedlistSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    movie = serializers.PrimaryKeyRelatedField(queryset=Movie.objects.all())
+    class Meta:
+        model = watchedlist
+        fields = ['id', 'user', 'movie']
+        read_only_fields = ['id']
+        extra_kwargs = {
+            'user': {'required': True},
+            'movie': {'required': True}
+        }
+    
+    def create(self, validated_data):
+        watchedlist = watchedlist.objects.create(**validated_data)
+        return watchedlist
+    
+    def update(self, instance, validated_data):
+        instance.user = validated_data.get('user', instance.user)
+        instance.movie = validated_data.get('movie', instance.movie)
+        instance.save()
+        return instance
+    
+    def delete(self, instance):
         instance.delete()

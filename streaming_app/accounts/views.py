@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
-from .serializers import GenreSerializer, MovieSerializer, PasswordResetRequestSerializer, UserRegisterSerializer, LoginSerializer, SetNewPasswordSerializer, LogoutUserSerializer, LoginAdminSerializer
+from .serializers import GenreSerializer, MovieSerializer, PasswordResetRequestSerializer, UserRegisterSerializer, LoginSerializer, SetNewPasswordSerializer, LogoutUserSerializer, LoginAdminSerializer, WatchedlistSerializer, WatchlistSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .utils import send_code_to_user
-from .models import Genre, Movie, OneTimePassword, User
+from .models import Genre, Movie, OneTimePassword, User, watchedlist, watchlist
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
@@ -237,3 +237,95 @@ class MovieDetailView(GenericAPIView):
             return Response({'message': 'Movie deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
         except Movie.DoesNotExist:
             return Response({'message': 'Movie not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class WatchlistView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WatchlistSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response({'message': 'Movie added to watchlist'}, status=status.HTTP_201_CREATED)
+    
+    def get(self, request):
+        watchlist = watchlist.objects.filter(user=request.user)
+        serializer = WatchlistSerializer(watchlist, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class WatchlistDetailView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WatchlistSerializer
+
+    def delete(self, request, pk):
+        try:
+            watchlist_item = watchlist.objects.get(user=request.user, movie_id=pk)
+            watchlist_item.delete()
+            return Response({'message': 'Movie removed from watchlist'}, status=status.HTTP_204_NO_CONTENT)
+        except watchlist.DoesNotExist:
+            return Response({'message': 'Movie not found in watchlist'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def put(self, request, pk):
+        try:
+            watchlist_item = watchlist.objects.get(user=request.user, movie_id=pk)
+            serializer = WatchlistSerializer(watchlist_item, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': 'Watchlist updated successfully'}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except watchlist.DoesNotExist:
+            return Response({'message': 'Movie not found in watchlist'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def get(self, request, pk):
+        try:
+            watchlist_item = watchlist.objects.get(user=request.user, movie_id=pk)
+            serializer = WatchlistSerializer(watchlist_item)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except watchlist.DoesNotExist:
+            return Response({'message': 'Movie not found in watchlist'}, status=status.HTTP_404_NOT_FOUND)
+
+class WatchedlistView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WatchedlistSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response({'message': 'Movie added to watchedlist'}, status=status.HTTP_201_CREATED)
+    
+    def get(self, request):
+        watchedlist = watchedlist.objects.filter(user=request.user)
+        serializer = WatchedlistSerializer(watchedlist, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class WatchedlistDetailView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = WatchedlistSerializer
+
+    def delete(self, request, pk):
+        try:
+            watchedlist_item = watchedlist.objects.get(user=request.user, movie_id=pk)
+            watchedlist_item.delete()
+            return Response({'message': 'Movie removed from watchedlist'}, status=status.HTTP_204_NO_CONTENT)
+        except watchedlist.DoesNotExist:
+            return Response({'message': 'Movie not found in watchedlist'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def put(self, request, pk):
+        try:
+            watchedlist_item = watchedlist.objects.get(user=request.user, movie_id=pk)
+            serializer = WatchedlistSerializer(watchedlist_item, data=request.data, partial=True)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+                return Response({'message': 'Watchedlist updated successfully'}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except watchedlist.DoesNotExist:
+            return Response({'message': 'Movie not found in watchedlist'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def get(self, request, pk):
+        try:
+            watchedlist_item = watchedlist.objects.get(user=request.user, movie_id=pk)
+            serializer = WatchedlistSerializer(watchedlist_item)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except watchedlist.DoesNotExist:
+            return Response({'message': 'Movie not found in watchedlist'}, status=status.HTTP_404_NOT_FOUND)

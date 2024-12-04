@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Counter
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.forms import ValidationError
@@ -235,3 +236,119 @@ class StreamingLink(models.Model):
     @property
     def formatted_streaming_link_movie_duration(self):
         return self.movie.formatted_duration
+
+class watchlist(models.Model):
+    user = models.ForeignKey(User, related_name='watchlists', on_delete=models.CASCADE)
+    movie = models.ManyToManyField(Movie, related_name='watchlist_movies')
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return f"{self.user.first_name}'s Watchlist"
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime("%B %d, %Y %I:%M:%S %p")
+    @property
+    def formatted_updated_at(self):
+        return self.updated_at.strftime("%B %d, %Y %I:%M:%S %p")
+    @property
+    def formatted_user_first_name(self):
+        return self.user.first_name
+    @property
+    def formatted_watchlist_movies(self):
+        return [f"{movie.title} - {', '.join(movie.actors)}" for movie in self.movie.all()]
+    @property
+    def formatted_watchlist_movies_count(self):
+        return self.movie.count()
+    @property
+    def formatted_watchlist_movies_average_rating(self):
+        return sum([float(movie.rating.split(',')[0]) if movie.rating else 0 for movie in self.movie.all()]) / self.movie.count() if self.movie.count() else 0.0
+    @property
+    def formatted_watchlist_movies_highest_rating(self):
+        return max([float(movie.rating.split(',')[0]) if movie.rating else 0 for movie in self.movie.all()]) if self.movie.all() else 0.0
+    @property
+    def formatted_watchlist_movies_lowest_rating(self):
+        return min([float(movie.rating.split(',')[0]) if movie.rating else 0 for movie in self.movie.all()]) if self.movie.all() else 0.0
+    @property
+    def formatted_watchlist_movies_duration(self):
+        return sum([movie.duration for movie in self.movie.all()]) if self.movie.all() else 0
+    @property
+    def formatted_watchlist_movies_most_recent_release_date(self):
+        return max([movie.release_date for movie in self.movie.all()]) if self.movie.all() else None
+    @property
+    def formatted_watchlist_movies_least_recent_release_date(self):
+        return min([movie.release_date for movie in self.movie.all()]) if self.movie.all() else None
+    @property
+    def formatted_watchlist_movies_most_common_genre(self):
+        genre_counts = Counter([genre.name for movie in self.movie.all() for genre in movie.genres.all()])
+        return genre_counts.most_common(1)[0][0] if genre_counts else None
+    @property
+    def formatted_watchlist_movies_least_common_genre(self):
+        genre_counts = Counter([genre.name for movie in self.movie.all() for genre in movie.genres.all()])
+        return genre_counts.most_common()[-1][0] if genre_counts else None
+    @property
+    def formatted_watchlist_movies_average_duration(self):
+        return sum([movie.duration for movie in self.movie.all()]) / self.movie.count() if self.movie.count() else 0.0
+    @property
+    def formatted_watchlist_movies_longest_duration(self):
+        return max([movie.duration for movie in self.movie.all()]) if self.movie.all() else 0
+    @property
+    def formatted_watchlist_movies_shortest_duration(self):
+        return min([movie.duration for movie in self.movie.all()]) if self.movie.all() else 0
+
+class watchedlist(models.Model):
+    user = models.ForeignKey(User, related_name='watchedlists', on_delete=models.CASCADE)
+    movie = models.ManyToManyField(Movie, related_name='watchedlist_movies')
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return f"{self.user.first_name}'s Watchedlist"
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime("%B %d, %Y %I:%M:%S %p")
+    @property
+    def formatted_updated_at(self):
+        return self.updated_at.strftime("%B %d, %Y %I:%M:%S %p")
+    @property
+    def formatted_user_first_name(self):
+        return self.user.first_name
+    @property
+    def formatted_watchedlist_movies(self):
+        return [f"{movie.title} - {', '.join(movie.actors)}" for movie in self.movie.all()]
+    @property
+    def formatted_watchedlist_movies_count(self):
+        return self.movie.count()
+    @property
+    def formatted_watchedlist_movies_average_rating(self):
+        return sum([float(movie.rating.split(',')[0]) if movie.rating else 0 for movie in self.movie.all()]) / self.movie.count() if self.movie.count() else 0.0
+    @property
+    def formatted_watchedlist_movies_highest_rating(self):
+        return max([float(movie.rating.split(',')[0]) if movie.rating else 0 for movie in self.movie.all()]) if self.movie.all() else 0.0
+    @property
+    def formatted_watchedlist_movies_lowest_rating(self):
+        return min([float(movie.rating.split(',')[0]) if movie.rating else 0 for movie in self.movie.all()]) if self.movie.all() else 0.0
+    @property
+    def formatted_watchedlist_movies_duration(self):
+        return sum([movie.duration for movie in self.movie.all()]) if self.movie.all() else 0
+    @property
+    def formatted_watchedlist_movies_most_recent_release_date(self):
+        return max([movie.release_date for movie in self.movie.all()]) if self.movie.all() else None
+    @property
+    def formatted_watchedlist_movies_least_recent_release_date(self):
+        return min([movie.release_date for movie in self.movie.all()]) if self.movie.all() else None
+    @property
+    def formatted_watchedlist_movies_most_common_genre(self):
+        genre_counts = Counter([genre.name for movie in self.movie.all() for genre in movie.genres.all()])
+        return genre_counts.most_common(1)[0][0] if genre_counts else None
+    @property
+    def formatted_watchedlist_movies_least_common_genre(self):
+        genre_counts = Counter([genre.name for movie in self.movie.all() for genre in movie.genres.all()])
+        return genre_counts.most_common()[-1][0] if genre_counts else None
+    @property
+    def formatted_watchedlist_movies_average_duration(self):
+        return sum([movie.duration for movie in self.movie.all()]) / self.movie.count() if self.movie.count() else 0.0
+    @property
+    def formatted_watchedlist_movies_longest_duration(self):
+        return max([movie.duration for movie in self.movie.all()]) if self.movie.all() else 0
+    @property
+    def formatted_watchedlist_movies_shortest_duration(self):
+        return min([movie.duration for movie in self.movie.all()]) if self.movie.all() else 0
