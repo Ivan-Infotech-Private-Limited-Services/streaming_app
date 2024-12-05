@@ -283,6 +283,25 @@ class WatchlistDetailView(GenericAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except watchlist.DoesNotExist:
             return Response({'message': 'Movie not found in watchlist'}, status=status.HTTP_404_NOT_FOUND)
+    
+    def post(self, request, pk):
+        """Mark a movie as watched and move it to the watched list"""
+        try:
+            watchlist_item = watchlist.objects.get(user=request.user, movie_id=pk)
+            
+            watched_item, created = watchedlist.objects.get_or_create(
+                user=request.user,
+                movie=watchlist_item.movie
+            )
+
+            watchlist_item.delete()
+
+            if created:
+                return Response({'message': 'Movie marked as watched and moved to watchedlist'}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({'message': 'Movie already exists in watchedlist'}, status=status.HTTP_200_OK)
+        except watchlist.DoesNotExist:
+            return Response({'message': 'Movie not found in watchlist'}, status=status.HTTP_404_NOT_FOUND)
 
 class WatchedlistView(GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -329,24 +348,3 @@ class WatchedlistDetailView(GenericAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except watchedlist.DoesNotExist:
             return Response({'message': 'Movie not found in watchedlist'}, status=status.HTTP_404_NOT_FOUND)
-    
-    def post(self, request, pk):
-        """Mark a movie as watched and move it to the watched list"""
-        try:
-            watchlist_item = watchlist.objects.get(user=request.user, movie_id=pk)
-            
-            # Move to watchedlist
-            watched_item, created = watchedlist.objects.get_or_create(
-                user=request.user,
-                movie=watchlist_item.movie
-            )
-
-            # Remove from watchlist
-            watchlist_item.delete()
-
-            if created:
-                return Response({'message': 'Movie marked as watched and moved to watchedlist'}, status=status.HTTP_201_CREATED)
-            else:
-                return Response({'message': 'Movie already exists in watchedlist'}, status=status.HTTP_200_OK)
-        except watchlist.DoesNotExist:
-            return Response({'message': 'Movie not found in watchlist'}, status=status.HTTP_404_NOT_FOUND)
