@@ -1,10 +1,12 @@
 from django.urls import path
 from .views import (
+    AdminDashboardView,
     GenreDetailView,
     GenreView,
     MovieDetailView,
     MovieListCreateView, 
-    RegisterUserView, 
+    RegisterUserView,
+    UserDashboardView, 
     VerifyEmailView, 
     LoginUserView, 
     TestAuthenticationView, 
@@ -39,4 +41,6 @@ urlpatterns=[
     path('watchlist/<int:pk>/', WatchlistDetailView.as_view(), name='watchlist-detail'),
     path('watchedlist/', WatchedlistView.as_view(), name='watchedlist'),
     path('watchedlist/<int:pk>/', WatchedlistDetailView.as_view(), name='watchedlist-detail'),
+    path('admin-dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),
+    path('user-dashboard/', UserDashboardView.as_view(), name='user-dashboard')
 ]

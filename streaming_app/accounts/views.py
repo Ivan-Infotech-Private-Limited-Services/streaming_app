@@ -9,6 +9,7 @@ from .models import Genre, Movie, OneTimePassword, User, watchedlist, watchlist
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import smart_str, DjangoUnicodeDecodeError
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.db.models import Count
 # Create your views here.
 
 class RegisterUserView(GenericAPIView):
@@ -348,3 +349,49 @@ class WatchedlistDetailView(GenericAPIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except watchedlist.DoesNotExist:
             return Response({'message': 'Movie not found in watchedlist'}, status=status.HTTP_404_NOT_FOUND)
+
+class AdminDashboardView(GenericAPIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+
+        genre_counts = Genre.objects.annotate(movie_count=Count('movie')).values('name', 'movie_count')
+
+        user_count = User.objects.count()
+
+        users_with_watchlist = User.objects.filter(watchlist__isnull=False).distinct().count()
+
+        movie_watchlist_counts = Movie.objects.annotate(
+            watchlist_count=Count('watchlist'), 
+            watched_count=Count('watchedlist')
+        ).values('title', 'watchlist_count', 'watched_count')
+
+        data = {
+            'movie_counts_per_genre': list(genre_counts),
+            'total_users': user_count,
+            'users_with_watchlist': users_with_watchlist,
+            'movie_watchlist_and_watched_counts': list(movie_watchlist_counts)
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+class UserDashboardView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Get the logged-in user
+        user = request.user
+
+        # Count the number of movies in the user's Watchlist
+        watchlist_count = watchlist.objects.filter(user=user).count()
+
+        # Count the number of movies in the user's WatchedList
+        watchedlist_count = watchedlist.objects.filter(user=user).count()
+
+        # Return the response with the counts
+        data = {
+            'watchlist_count': watchlist_count,
+            'watchedlist_count': watchedlist_count
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
