@@ -379,16 +379,13 @@ class UserDashboardView(GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Get the logged-in user
+
         user = request.user
 
-        # Count the number of movies in the user's Watchlist
         watchlist_count = watchlist.objects.filter(user=user).count()
 
-        # Count the number of movies in the user's WatchedList
         watchedlist_count = watchedlist.objects.filter(user=user).count()
 
-        # Return the response with the counts
         data = {
             'watchlist_count': watchlist_count,
             'watchedlist_count': watchedlist_count
